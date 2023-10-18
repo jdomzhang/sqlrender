@@ -9,8 +9,6 @@ pub(super) fn ddl(table: &Table) -> proc_macro2::TokenStream {
 
 	let sql = makesql_ddl(table);
 
-	// super::validate_sql_or_abort(&sql);
-
 	quote_spanned! { table.span =>
 		fn ddl_sql(&self) -> Result<String, ::sqlrender::Error> {
 			assert!(self.id.is_some());

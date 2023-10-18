@@ -1,10 +1,6 @@
 #[doc(hidden)]
 pub use once_cell::sync::Lazy;
-#[doc(hidden)]
-pub use rusqlite::{
-	self, named_params, params, types::FromSql, types::FromSqlResult, types::ToSql,
-	types::ToSqlOutput, types::Value, types::ValueRef,
-};
+
 #[doc(hidden)]
 pub use serde::Serialize;
 #[doc(hidden)]
@@ -43,15 +39,8 @@ pub trait SqlRender {
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-	// #[error(transparent)]
-	// Rusqlite(#[from] rusqlite::Error),
 	#[error(transparent)]
 	SerdeJson(#[from] serde_json::Error),
 	#[error("SqlRender Error: {0}")]
 	OtherError(&'static str),
 }
-
-// /// Convenience function that returns the current time as milliseconds since UNIX epoch.
-// pub fn now_ms() -> i64 {
-// 	std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64
-// }
