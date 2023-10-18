@@ -1,6 +1,3 @@
 [workspace]
-members = [
-  "turbosql",
-  "turbosql-impl",
-]
+members = ["turbosql", "turbosql-impl"]
 resolver = "2"
