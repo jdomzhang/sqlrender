@@ -2,9 +2,8 @@
 
 An easy sql generator.
 
-- Schema auto-defined by your Rust `struct`s
-- Basic `INSERT`/`SELECT`/`UPDATE`/`DELETE` sql statements
-- Use complex SQL if that's your jam
+- Schema auto-defined by your Rust `struct`
+- Including `INSERT`/`SELECT`/`UPDATE`/`DELETE`/`Soft DELETE`/`DDL` sql statements
 
 ## Usage
 
@@ -66,3 +65,7 @@ fn main() {
 }
 
 ```
+
+## Note
+
+Changed the code based on [`turbosql`](https://github.com/trevyn/turbosql)
