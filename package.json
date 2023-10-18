@@ -1,6 +1,6 @@
 {
   "scripts": {
     "doc": "cargo doc --no-deps",
-    "test": "cargo test --manifest-path=sqlrender/Cargo.toml --features test -- --test-threads=1 && cargo test --manifest-path=sqlrender-impl/Cargo.toml --features test"
+    "test": "cargo test"
   }
 }

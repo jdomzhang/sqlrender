@@ -17,11 +17,22 @@ pub(super) fn insert(table: &Table) -> proc_macro2::TokenStream {
 }
 
 fn makesql_insert(table: &Table) -> String {
-	let mut sql = format!("INSERT INTO {} (", table.name);
-	sql += table.columns.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join(", ").as_str();
-	sql += ") VALUES (";
-	sql += table.columns.iter().map(|_| "?").collect::<Vec<_>>().join(", ").as_str();
-	sql += ")";
-
-	sql
+	format!(
+		r#"INSERT INTO `{}` ({}) VALUES ({})"#,
+		table.name,
+		table
+			.columns
+			.iter()
+			.filter(|c| c.name != "id" && c.name != "deleted_at")
+			.map(|c| format!("`{}`", c.name))
+			.collect::<Vec<_>>()
+			.join(", "),
+		table
+			.columns
+			.iter()
+			.filter(|c| c.name != "id" && c.name != "deleted_at")
+			.map(|_| "?")
+			.collect::<Vec<_>>()
+			.join(", ")
+	)
 }

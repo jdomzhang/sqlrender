@@ -34,6 +34,9 @@ pub trait SqlRender {
 	// get soft delete sql
 	fn soft_delete_sql(&self) -> Result<String, Error>;
 
+	// get ddl sql
+	fn ddl_sql(&self) -> Result<String, Error>;
+
 	// get table name
 	fn table_name(&self) -> &'static str;
 }

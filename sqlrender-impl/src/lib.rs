@@ -4,7 +4,7 @@
 
 #![forbid(unsafe_code)]
 
-// const SQLITE_U64_ERROR: &str = r##"SQLite cannot natively store unsigned 64-bit integers, so SqlRender does not support u64 fields. Use i64, u32, f64, or a string or binary format instead. (see https://github.com/trevyn/sqlrender/issues/3 )"##;
+// const SQLITE_U64_ERROR: &str = r##"SQLite cannot natively store unsigned 64-bit integers, so SqlRender does not support u64 fields. Use i64, u32, f64, or a string or binary format instead. (see https://github.com/jdomzhang/sqlrender/issues/3 )"##;
 
 use once_cell::sync::Lazy;
 use proc_macro2::Span;
@@ -13,15 +13,14 @@ use quote::{quote, ToTokens};
 // use rusqlite::{params, Connection, Statement};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{
-	parse_macro_input, parse_quote, Data, DeriveInput, Fields, FieldsNamed, Ident, Meta, Token,
-};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Ident, Meta, Token};
 
 // #[cfg(not(feature = "test"))]
 // const MIGRATIONS_FILENAME: &str = "migrations.toml";
 // #[cfg(feature = "test")]
 // const MIGRATIONS_FILENAME: &str = "test.migrations.toml";
 
+mod ddl;
 mod delete;
 mod insert;
 mod misc;
@@ -734,6 +733,7 @@ pub fn sqlrender_derive_macro(input: proc_macro::TokenStream) -> proc_macro::Tok
 	let fn_insert = insert::insert(&table);
 	let fn_update = update::update(&table);
 	let fn_delete = delete::delete(&table);
+	let fn_ddl = ddl::ddl(&table);
 	let fn_misc = misc::misc(&table);
 
 	// output tokenstream
@@ -745,6 +745,7 @@ pub fn sqlrender_derive_macro(input: proc_macro::TokenStream) -> proc_macro::Tok
 			#fn_insert
 			#fn_update
 			#fn_delete
+			#fn_ddl
 			#fn_misc
 		}
 	};
@@ -789,19 +790,20 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 				name.as_str(),
 				if U8_ARRAY_RE.is_match(&ty_str) { "Option < [u8; _] >" } else { ty_str.as_str() },
 			) {
-				("id", "Option < u64 >") => "BIG INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY",
+				("id", "Option < u64 >") => "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY",
 				(_, "Option < i8 >") => "INT",
 				(_, "Option < u8 >") => "INT",
 				(_, "Option < i16 >") => "INT",
 				(_, "Option < u16 >") => "INT",
 				(_, "Option < i32 >") => "INT",
 				(_, "Option < u32 >") => "INT",
-				(_, "Option < i64 >") => "BIG INT",
-				(_, "Option < u64 >") => "BIG INT UNSIGNED",
+				(_, "Option < i64 >") => "BIGINT",
+				(_, "Option < u64 >") => "BIGINT UNSIGNED",
 				(_, "Option < f64 >") => "DOUBLE",
 				(_, "Option < f32 >") => "DOUBLE",
 				(_, "Option < bool >") => "TINYINT",
-				(_, "Option < String >") => "LONGTEXT",
+				(_, "Option < String >") => "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+				(_, "Option < DateTime < FixedOffset > >") => "TIMESTAMP",
 				// SELECT LENGTH(blob_column) ... will be null if blob is null
 				(_, "Option < Blob >") => "BLOB",
 				(_, "Option < Vec < u8 > >") => "BLOB",
@@ -835,7 +837,7 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 
 	if !matches!(
 		columns.iter().find(|c| c.name == "id"),
-		Some(Column { sql_type: "BIG INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY", .. })
+		Some(Column { sql_type: "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY", .. })
 	) {
 		abort_call_site!("derive(SqlRender) structs must include a 'id: Option<u64>' field")
 	};
@@ -983,6 +985,8 @@ fn is_rust_analyzer() -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	// use chrono::{DateTime, FixedOffset};
+	use syn::parse_quote;
 
 	#[test]
 	fn test_extract_columns() {
@@ -993,6 +997,7 @@ mod tests {
 			awesomeness: Option<f64>,
 			#[sqlrender(skip)]
 			skipped: Option<bool>
+			// deleted_at: DateTime<FixedOffset>
 		});
 
 		let columns = extract_columns(&fields_named);
@@ -1001,11 +1006,11 @@ mod tests {
 
 		assert_eq!(columns[0].name, "id");
 		assert_eq!(columns[0].rust_type, "Option < u64 >");
-		assert_eq!(columns[0].sql_type, "BIG INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY");
+		assert_eq!(columns[0].sql_type, "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY");
 
 		assert_eq!(columns[1].name, "name");
 		assert_eq!(columns[1].rust_type, "Option < String >");
-		assert_eq!(columns[1].sql_type, "LONGTEXT");
+		assert_eq!(columns[1].sql_type, "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
 		assert_eq!(columns[2].name, "age");
 		assert_eq!(columns[2].rust_type, "Option < u32 >");

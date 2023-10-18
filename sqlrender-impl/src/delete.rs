@@ -26,9 +26,9 @@ pub(super) fn delete(table: &Table) -> proc_macro2::TokenStream {
 }
 
 fn makesql_soft_delete(table: &Table) -> String {
-	format!("UPDATE {} SET deleted_at = now() WHERE deleted_at is null and id=?", table.name,)
+	format!("UPDATE `{}` SET deleted_at = now() WHERE deleted_at is null and id=?", table.name,)
 }
 
 fn makesql_delete(table: &Table) -> String {
-	format!("DELETE FROM {} WHERE id=?", table.name,)
+	format!("DELETE FROM `{}` WHERE id=?", table.name,)
 }

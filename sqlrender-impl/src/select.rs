@@ -22,13 +22,13 @@ pub(super) fn select(table: &Table) -> proc_macro2::TokenStream {
 }
 
 fn makesql_select(table: &Table) -> String {
-	let sql = format!("SELECT {0}.* FROM {0}", table.name);
+	let sql = format!("SELECT `{0}`.* FROM `{0}`", table.name);
 
 	sql
 }
 
 fn makesql_scoped_select(table: &Table) -> String {
-	let sql = format!("SELECT {0}.* FROM {0} WHERE {0}.deleted_at is null", table.name);
+	let sql = format!("SELECT `{0}`.* FROM `{0}` WHERE `{0}`.deleted_at is null", table.name);
 
 	sql
 }
