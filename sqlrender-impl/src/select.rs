@@ -9,12 +9,12 @@ pub(super) fn select(table: &Table) -> proc_macro2::TokenStream {
 	// super::validate_sql_or_abort(&scoped_sql);
 
 	quote_spanned! { table.span =>
-		fn select_sql(&self) -> Result<String, ::turbosql::Error> {
+		fn select_sql(&self) -> Result<String, ::sqlrender::Error> {
 			let statement = #sql;
 			Ok(statement.to_string())
 		}
 
-		fn scoped_select_sql(&self) -> Result<String, ::turbosql::Error> {
+		fn scoped_select_sql(&self) -> Result<String, ::sqlrender::Error> {
 			let statement = #scoped_sql;
 			Ok(statement.to_string())
 		}

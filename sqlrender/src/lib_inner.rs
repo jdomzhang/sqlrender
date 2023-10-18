@@ -9,13 +9,13 @@ pub use rusqlite::{
 pub use serde::Serialize;
 #[doc(hidden)]
 pub use serde_json;
-pub use turbosql_impl::Turbosql;
+pub use sqlrender_impl::SqlRender;
 
 // /// Wrapper for `Vec<u8>` that may one day impl `Read`, `Write` and `Seek` traits.
 // pub type Blob = Vec<u8>;
 
-/// `#[derive(Turbosql)]` generates impls for this trait.
-pub trait Turbosql {
+/// `#[derive(SqlRender)]` generates impls for this trait.
+pub trait SqlRender {
 	// get select sql
 	fn select_sql(&self) -> Result<String, Error>;
 
@@ -44,7 +44,7 @@ pub enum Error {
 	// Rusqlite(#[from] rusqlite::Error),
 	#[error(transparent)]
 	SerdeJson(#[from] serde_json::Error),
-	#[error("Turbosql Error: {0}")]
+	#[error("SqlRender Error: {0}")]
 	OtherError(&'static str),
 }
 

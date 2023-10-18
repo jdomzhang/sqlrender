@@ -1,9 +1,9 @@
 [package]
-description = "Internal implementation details for Turbosql."
+description = "Internal implementation details for SqlRender."
 edition = "2021"
 license = "MIT"
-name = "turbosql-impl"
-repository = "https://github.com/trevyn/turbosql"
+name = "sqlrender-impl"
+repository = "https://github.com/trevyn/sqlrender"
 rust-version = "1.70"
 version = "0.8.0"
 
@@ -21,6 +21,5 @@ serde = { version = "1", features = ["derive"] }
 syn = { version = "2", features = ["extra-traits", "full"] }
 
 [features]
-sqlite-compat-no-strict-tables = []
 # Needs to be set during parent crate tests
 test = []

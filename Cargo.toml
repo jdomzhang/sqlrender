@@ -1,3 +1,3 @@
 [workspace]
-members = ["turbosql", "turbosql-impl"]
+members = ["sqlrender", "sqlrender-impl"]
 resolver = "2"

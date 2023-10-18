@@ -1,10 +1,10 @@
-//! This crate provides Turbosql's procedural macros.
+//! This crate provides SqlRender's procedural macros.
 //!
-//! Please refer to the `turbosql` crate for how to set this up.
+//! Please refer to the `sqlrender` crate for how to set this up.
 
 #![forbid(unsafe_code)]
 
-// const SQLITE_U64_ERROR: &str = r##"SQLite cannot natively store unsigned 64-bit integers, so Turbosql does not support u64 fields. Use i64, u32, f64, or a string or binary format instead. (see https://github.com/trevyn/turbosql/issues/3 )"##;
+// const SQLITE_U64_ERROR: &str = r##"SQLite cannot natively store unsigned 64-bit integers, so SqlRender does not support u64 fields. Use i64, u32, f64, or a string or binary format instead. (see https://github.com/trevyn/sqlrender/issues/3 )"##;
 
 use once_cell::sync::Lazy;
 use proc_macro2::Span;
@@ -13,7 +13,9 @@ use quote::{quote, ToTokens};
 // use rusqlite::{params, Connection, Statement};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, Ident, Meta, Token};
+use syn::{
+	parse_macro_input, parse_quote, Data, DeriveInput, Fields, FieldsNamed, Ident, Meta, Token,
+};
 
 // #[cfg(not(feature = "test"))]
 // const MIGRATIONS_FILENAME: &str = "migrations.toml";
@@ -149,7 +151,7 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 // 					let real_name = format_ident!("{}", name.strip_suffix("__serialized").unwrap());
 // 					quote!(#real_name: {
 // 						let string: String = row.get(#i)?;
-// 						::turbosql::serde_json::from_str(&string)?
+// 						::sqlrender::serde_json::from_str(&string)?
 // 					})
 // 				} else {
 // 					quote!(#name: row.get(#i)?)
@@ -261,9 +263,9 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 
 // 	tempdb
 // 		.execute_batch(if cfg!(feature = "sqlite-compat-no-strict-tables") {
-// 			"CREATE TABLE _turbosql_migrations (rowid INTEGER PRIMARY KEY, migration TEXT NOT NULL);"
+// 			"CREATE TABLE _sqlrender_migrations (rowid INTEGER PRIMARY KEY, migration TEXT NOT NULL);"
 // 		} else {
-// 			"CREATE TABLE _turbosql_migrations (rowid INTEGER PRIMARY KEY, migration TEXT NOT NULL) STRICT;"
+// 			"CREATE TABLE _sqlrender_migrations (rowid INTEGER PRIMARY KEY, migration TEXT NOT NULL) STRICT;"
 // 		})
 // 		.unwrap();
 
@@ -461,7 +463,7 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 // 					None => {
 // 						abort!(
 // 							span,
-// 							"Table {:?} not found. Does struct {} exist and have #[derive(Turbosql, Default)]?",
+// 							"Table {:?} not found. Does struct {} exist and have #[derive(SqlRender, Default)]?",
 // 							table_name,
 // 							table_type
 // 						);
@@ -533,13 +535,13 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 // 	}
 
 // 	let params = if stmt_info.named_parameters.is_empty() {
-// 		quote! { ::turbosql::params![#params] }
+// 		quote! { ::sqlrender::params![#params] }
 // 	} else {
 // 		let param_quotes = stmt_info.named_parameters.iter().map(|p| {
 // 			let var_ident = format_ident!("{}", &p[1..]);
 // 			quote!(#p: &#var_ident,)
 // 		});
-// 		quote! { ::turbosql::named_params![#(#param_quotes),*] }
+// 		quote! { ::sqlrender::named_params![#(#param_quotes),*] }
 // 	};
 
 // 	// if we return no columns, this should be an execute
@@ -551,8 +553,8 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 
 // 		return Ok(quote! {
 // 		{
-// 			(|| -> Result<usize, ::turbosql::Error> {
-// 				::turbosql::__TURBOSQL_DB.with(|db| {
+// 			(|| -> Result<usize, ::sqlrender::Error> {
+// 				::sqlrender::__TURBOSQL_DB.with(|db| {
 // 					let db = db.borrow_mut();
 // 					let mut stmt = db.prepare_cached(#sql)?;
 // 					Ok(stmt.execute(#params)?)
@@ -628,7 +630,7 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 // 	// } else if container.is_none() {
 // 	// 	return_type = quote! { #content_ty };
 // 	// 	handle_result =
-// 	// 		quote! { Ok(result.next().ok_or(::turbosql::rusqlite::Error::QueryReturnedNoRows)?) };
+// 	// 		quote! { Ok(result.next().ok_or(::sqlrender::rusqlite::Error::QueryReturnedNoRows)?) };
 // 	// } else {
 // 	// 	unreachable!("No other container type is possible");
 // 	// }
@@ -637,11 +639,11 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 
 // 	// let tokens = quote! {
 // 	// 	{
-// 	// 		(|| -> Result<#return_type, ::turbosql::Error> {
-// 	// 			::turbosql::__TURBOSQL_DB.with(|db| {
+// 	// 		(|| -> Result<#return_type, ::sqlrender::Error> {
+// 	// 			::sqlrender::__TURBOSQL_DB.with(|db| {
 // 	// 				let db = db.borrow_mut();
 // 	// 				let mut stmt = db.prepare_cached(#sql)?;
-// 	// 				let mut result = stmt.query_and_then(#params, |row| -> Result<#content_ty, ::turbosql::Error> {
+// 	// 				let mut result = stmt.query_and_then(#params, |row| -> Result<#content_ty, ::sqlrender::Error> {
 // 	// 					#handle_row
 // 	// 				})?.flatten();
 // 	// 				#handle_result
@@ -681,10 +683,10 @@ static U8_ARRAY_RE: Lazy<regex::Regex> =
 // 	proc_macro::TokenStream::from(tokens)
 // }
 
-/// Derive this on a `struct` to create a corresponding SQLite table and `Turbosql` trait methods.
-#[proc_macro_derive(Turbosql, attributes(turbosql))]
+/// Derive this on a `struct` to create a corresponding SQLite table and `SqlRender` trait methods.
+#[proc_macro_derive(SqlRender, attributes(sqlrender))]
 #[proc_macro_error]
-pub fn turbosql_derive_macro(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn sqlrender_derive_macro(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	if is_rust_analyzer() {
 		return quote!().into();
 	}
@@ -738,7 +740,7 @@ pub fn turbosql_derive_macro(input: proc_macro::TokenStream) -> proc_macro::Toke
 
 	let output = quote! {
 		#[cfg(not(target_arch = "wasm32"))]
-		impl ::turbosql::Turbosql for #table {
+		impl ::sqlrender::SqlRender for #table {
 			#fn_select
 			#fn_insert
 			#fn_update
@@ -759,7 +761,7 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 			// Skip (skip) fields
 
 			for attr in &f.attrs {
-				if attr.path().is_ident("turbosql") {
+				if attr.path().is_ident("sqlrender") {
 					for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated).unwrap() {
 						match meta {
 							Meta::Path(path) if path.is_ident("skip") => {
@@ -810,7 +812,7 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 					} else {
 						abort!(
 							ty,
-							"Turbosql types must be wrapped in Option for forward/backward schema compatibility. Try: Option<{}>",
+							"SqlRender types must be wrapped in Option for forward/backward schema compatibility. Try: Option<{}>",
 							ty_str
 						)
 					}
@@ -835,7 +837,7 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 		columns.iter().find(|c| c.name == "id"),
 		Some(Column { sql_type: "BIG INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY", .. })
 	) {
-		abort_call_site!("derive(Turbosql) structs must include a 'id: Option<u64>' field")
+		abort_call_site!("derive(SqlRender) structs must include a 'id: Option<u64>' field")
 	};
 
 	columns
@@ -914,7 +916,7 @@ fn extract_columns(fields: &FieldsNamed) -> Vec<Column> {
 // 	.serialize(serializer)
 // 	.unwrap_or_else(|e| abort_call_site!("Unable to serialize migrations toml: {:?}", e));
 
-// 	let new_toml_str = format!("# This file is auto-generated by Turbosql.\n# It is used to create and apply automatic schema migrations.\n# It should be checked into source control.\n# Modifying it by hand may be dangerous; see the docs.\n\n{}", &new_toml_str);
+// 	let new_toml_str = format!("# This file is auto-generated by SqlRender.\n# It is used to create and apply automatic schema migrations.\n# It should be checked into source control.\n# Modifying it by hand may be dangerous; see the docs.\n\n{}", &new_toml_str);
 
 // 	// Only write migrations.toml file if it has actually changed;
 // 	// this keeps file mod date clean so cargo doesn't pathologically rebuild
@@ -989,7 +991,7 @@ mod tests {
 			name: Option<String>,
 			age: Option<u32>,
 			awesomeness: Option<f64>,
-			#[turbosql(skip)]
+			#[sqlrender(skip)]
 			skipped: Option<bool>
 		});
 
@@ -999,19 +1001,19 @@ mod tests {
 
 		assert_eq!(columns[0].name, "id");
 		assert_eq!(columns[0].rust_type, "Option < u64 >");
-		assert_eq!(columns[0].sql_type, "INTEGER PRIMARY KEY");
+		assert_eq!(columns[0].sql_type, "BIG INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY");
 
 		assert_eq!(columns[1].name, "name");
 		assert_eq!(columns[1].rust_type, "Option < String >");
-		assert_eq!(columns[1].sql_type, "TEXT");
+		assert_eq!(columns[1].sql_type, "LONGTEXT");
 
 		assert_eq!(columns[2].name, "age");
 		assert_eq!(columns[2].rust_type, "Option < u32 >");
-		assert_eq!(columns[2].sql_type, "INTEGER");
+		assert_eq!(columns[2].sql_type, "INT");
 
 		assert_eq!(columns[3].name, "awesomeness");
 		assert_eq!(columns[3].rust_type, "Option < f64 >");
-		assert_eq!(columns[3].sql_type, "REAL");
+		assert_eq!(columns[3].sql_type, "DOUBLE");
 
 		assert!(!columns.iter().any(|c| c.name == "skipped"));
 	}

@@ -13,7 +13,7 @@ pub(super) fn update(table: &Table) -> proc_macro2::TokenStream {
 	// super::validate_sql_or_abort(&sql);
 
 	quote_spanned! { table.span =>
-		fn update_sql(&self) -> Result<String, ::turbosql::Error> {
+		fn update_sql(&self) -> Result<String, ::sqlrender::Error> {
 			assert!(self.id.is_some());
 			let statement = #sql;
 			Ok(statement.to_string())

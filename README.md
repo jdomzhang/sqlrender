@@ -1,4 +1,4 @@
-# Turbosql
+# SqlRender
 
 An easy sql generator.
 
@@ -9,15 +9,15 @@ An easy sql generator.
 ## Usage
 
 ```rust
-use turbosql::Turbosql;
+use sqlrender::SqlRender;
 
-#[derive(Turbosql, Default)]
+#[derive(SqlRender, Default)]
 struct Person {
  id: Option<u64>,
  name: Option<String>,
  age: Option<u32>,
  awesomeness: Option<f64>,
- #[turbosql(skip)]
+ #[sqlrender(skip)]
  skipped: Option<bool>,
  deleted_at: Option<String>,
 }

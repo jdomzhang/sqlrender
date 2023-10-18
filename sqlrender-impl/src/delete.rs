@@ -11,13 +11,13 @@ pub(super) fn delete(table: &Table) -> proc_macro2::TokenStream {
 	let soft_sql = makesql_soft_delete(table);
 
 	quote_spanned! { table.span =>
-		fn delete_sql(&self) -> Result<String, ::turbosql::Error> {
+		fn delete_sql(&self) -> Result<String, ::sqlrender::Error> {
 			assert!(self.id.is_some());
 			let statement = #sql;
 			Ok(statement.to_string())
 		}
 
-		fn soft_delete_sql(&self) -> Result<String, ::turbosql::Error> {
+		fn soft_delete_sql(&self) -> Result<String, ::sqlrender::Error> {
 			assert!(self.id.is_some());
 			let statement = #soft_sql;
 			Ok(statement.to_string())
