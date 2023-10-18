@@ -7,9 +7,6 @@ pub use serde::Serialize;
 pub use serde_json;
 pub use sqlrender_impl::SqlRender;
 
-// /// Wrapper for `Vec<u8>` that may one day impl `Read`, `Write` and `Seek` traits.
-// pub type Blob = Vec<u8>;
-
 /// `#[derive(SqlRender)]` generates impls for this trait.
 pub trait SqlRender {
 	// get select sql

@@ -34,6 +34,7 @@ impl ToTokens for Table {
 	}
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct Column {
 	ident: Ident,
